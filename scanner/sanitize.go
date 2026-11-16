@@ -14,6 +14,29 @@ const (
 
 var numberRegex = regexp.MustCompile(`^[-0-9]+(?:\.[0-9]+)?`)
 
+const xsdNamespace = "http://www.w3.org/2001/XMLSchema#"
+
+var (
+	integerRegex = regexp.MustCompile(`^[-+]?[0-9]+$`)
+	decimalRegex = regexp.MustCompile(`^[-+]?[0-9]*\.[0-9]+$`)
+	doubleRegex  = regexp.MustCompile(`^[-+]?([0-9]+\.[0-9]*|\.[0-9]+|[0-9]+)[eE][-+]?[0-9]+$`)
+)
+
+// bareLiteralDatatype returns the implicit xsd datatype of an unquoted number or boolean, or "".
+func bareLiteralDatatype(token string) string {
+	switch {
+	case token == "true" || token == "false":
+		return "<" + xsdNamespace + "boolean>"
+	case doubleRegex.MatchString(token):
+		return "<" + xsdNamespace + "double>"
+	case decimalRegex.MatchString(token):
+		return "<" + xsdNamespace + "decimal>"
+	case integerRegex.MatchString(token):
+		return "<" + xsdNamespace + "integer>"
+	}
+	return ""
+}
+
 func expandPrefix(token string, value string) string {
 	i := strings.Index(token, ":")
 	if len(token) <= i+1 {
@@ -97,6 +120,13 @@ func (s *Scanner) sanitize(token string) (string, string, string, string) {
 			label = token[lastLabelIndex+len(labelDelimiter):]
 			token = token[:lastLabelIndex]
 		}
+
+		if datatype == "" {
+			datatype = bareLiteralDatatype(token)
+		}
+	} else if dt := bareLiteralDatatype(token); dt != "" {
+		typ = "literal"
+		datatype = dt
 	} else {
 		typ = "iri"
 

@@ -66,6 +66,30 @@ var sanitizeTestCases = map[string]struct {
 		datatype: `qudt:LatexString`,
 		typ:      "literal",
 	},
+	"bare-integer": {
+		input:    `42`,
+		token:    `42`,
+		datatype: `<http://www.w3.org/2001/XMLSchema#integer>`,
+		typ:      "literal",
+	},
+	"bare-decimal": {
+		input:    `-48.200`,
+		token:    `-48.200`,
+		datatype: `<http://www.w3.org/2001/XMLSchema#decimal>`,
+		typ:      "literal",
+	},
+	"bare-double": {
+		input:    `1.0E0`,
+		token:    `1.0E0`,
+		datatype: `<http://www.w3.org/2001/XMLSchema#double>`,
+		typ:      "literal",
+	},
+	"bare-boolean": {
+		input:    `false`,
+		token:    `false`,
+		datatype: `<http://www.w3.org/2001/XMLSchema#boolean>`,
+		typ:      "literal",
+	},
 }
 
 func TestSanitize(t *testing.T) {
