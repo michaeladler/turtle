@@ -39,6 +39,8 @@ func splitTurtle(data []byte, atEOF bool) (advance int, token []byte, err error)
 	var prefixedIri bool
 	var runeBuffer []rune
 	var inMultiLineLiteral bool
+	var prevRune rune
+	var quoteRun int
 	for width, i := 0, start; i < len(data); i += width {
 		var r rune
 		r, width = utf8.DecodeRune(data[i:])
@@ -46,15 +48,25 @@ func splitTurtle(data []byte, atEOF bool) (advance int, token []byte, err error)
 		// add rune to rune buffer
 		runeBuffer = appendRuneToBuffer(r, runeBuffer)
 
+		if r == prevRune {
+			quoteRun++
+		} else {
+			quoteRun = 1
+		}
+		prevRune = r
+
 		multilineLiteralEdge := bufferContainsLiterals(runeBuffer)
 		escaped := escapedCharacter(runeBuffer)
 		// if the last characters were literals, switch the multiline
 		// literal and literal state
 		if multilineLiteralEdge && !escaped {
+			nextRune, _ := utf8.DecodeRune(data[i+width:])
 			if !inMultiLineLiteral && !literal {
 				inMultiLineLiteral = true
 				literal = true
-			} else if inMultiLineLiteral {
+				quoteRun = 0
+			} else if inMultiLineLiteral && quoteRun >= 3 && nextRune != r {
+				// closing is the last quote of a run; a quote right after the opener is content
 				inMultiLineLiteral = false
 				literal = false
 			}

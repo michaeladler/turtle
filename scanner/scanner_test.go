@@ -500,6 +500,34 @@ var scanTestCases = map[string]struct {
 			{"https://schema.org/ComicSeries", "https://schema.org/isPartOf", "https://bib.schema.org"},
 		},
 	},
+	"multiline-literal-starting-with-quote": {
+		data: []byte(`@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <http://example.org/> .
+
+ex:Unit dcterms:description """"Decibel" unit""" ;
+	dcterms:alt """""" .`),
+		expectedTokens: []string{
+			`@prefix`,
+			`dcterms:`,
+			`<http://purl.org/dc/terms/>`,
+			`.`,
+			`@prefix`,
+			`ex:`,
+			`<http://example.org/>`,
+			`.`,
+			`ex:Unit`,
+			`dcterms:description`,
+			`""""Decibel" unit"""`,
+			`;`,
+			`dcterms:alt`,
+			`""""""`,
+			`.`,
+		},
+		expectedTriples: [][3]string{
+			{"http://example.org/Unit", "http://purl.org/dc/terms/description", `"Decibel" unit`},
+			{"http://example.org/Unit", "http://purl.org/dc/terms/alt", ""},
+		},
+	},
 	"apostrophe-multiline-literal": {
 		data: []byte(`@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 						@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
